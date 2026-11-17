@@ -4,8 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>EduManager Pro CRM</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta name="referrer" content="no-referrer" />
+<meta name="robots" content="noindex, nofollow" />
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
   tailwind.config = { darkMode: 'class', theme: { extend: {
     animation: {
@@ -63,15 +66,15 @@
     </div>
     <form id="loginForm" class="space-y-4">
       <div>
-        <label class="text-sm font-medium block mb-2">Username</label>
-        <input id="loginUser" type="text" class="input-field w-full px-4 py-3 rounded-2xl" placeholder="username" autocomplete="username"/>
+        <label class="text-sm font-medium block mb-2">Email</label>
+        <input id="loginUser" type="email" class="input-field w-full px-4 py-3 rounded-2xl" placeholder="email" autocomplete="username"/>
       </div>
       <div>
         <label class="text-sm font-medium block mb-2">Parol</label>
         <input id="loginPass" type="password" class="input-field w-full px-4 py-3 rounded-2xl" placeholder="********" autocomplete="current-password"/>
       </div>
-      <div id="loginError" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-500/10 px-4 py-2 rounded-xl">Login yoki parol xato</div>
-      <button type="submit" class="btn-primary w-full py-3 rounded-2xl font-semibold">Kirish</button>
+      <div id="loginError" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-500/10 px-4 py-2 rounded-xl">Email yoki parol xato</div>
+      <button id="loginBtn" type="submit" class="btn-primary w-full py-3 rounded-2xl font-semibold">Kirish</button>
     </form>
   </div>
 </div>
@@ -140,54 +143,28 @@
 </div>
 
 <script>
-// ============== STORAGE ==============
+// ============== SOZLAMA (Supabase) ==============
+// Bu ikkala qiymat OCHIQ bo'lishi mumkin (public). Xavfsizlikni baza ichidagi RLS qoidalari ta'minlaydi.
+// Bu yerga HECH QACHON "service_role" kalitini qo'ymang!
+const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY';
+
+const CONFIGURED = !SUPABASE_URL.includes('YOUR-PROJECT') && !SUPABASE_ANON_KEY.includes('YOUR-ANON');
+const sb = CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+// Faqat qurilma sozlamalari (tema, daromadni yashirish) brauzerda qoladi. Asosiy ma'lumot serverda.
 const LS = {
   get:(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v);}catch{return d}},
   set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn('LS blocked',e)}}
 };
-const CRED = { username:'firdavsulashev', password:'firdavs56' };
-
-// ============== MIGRATION ==============
-// Old shape compatibility
-(function migrate(){
-  const oldGroups = LS.get('em_groups', null);
-  if(oldGroups && !LS.get('em_subjects', null)){
-    // create one "Umumiy" subject and link
-    const subjId = 'sj_default';
-    LS.set('em_subjects', [{id:subjId, name:'Umumiy fan', description:'Avtomatik yaratilgan', createdAt:Date.now()}]);
-    const updated = oldGroups.map(g => ({...g, subjectId: g.subjectId || subjId, monthlyFee: g.monthlyFee || g.price || 0}));
-    LS.set('em_groups', updated);
-  }
-  // Ensure students have joinDate
-  const studs = LS.get('em_students', null);
-  if(studs){
-    let changed=false;
-    studs.forEach(s=>{
-      if(!s.joinDate){ s.joinDate = new Date(s.createdAt||Date.now()).toISOString().slice(0,10); changed=true; }
-    });
-    if(changed) LS.set('em_students', studs);
-  }
-  // payments: ensure monthKey
-  const pays = LS.get('em_payments', null);
-  if(pays){
-    let changed=false;
-    pays.forEach(p=>{
-      if(!p.monthKey){
-        const d=new Date(p.paymentDate||p.createdAt||Date.now());
-        p.monthKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-        changed=true;
-      }
-    });
-    if(changed) LS.set('em_payments', pays);
-  }
-})();
 
 // ============== STATE ==============
 let state = {
-  subjects: LS.get('em_subjects', []),
-  groups:   LS.get('em_groups', []),
-  students: LS.get('em_students', []),
-  payments: LS.get('em_payments', []),
+  subjects: [],
+  groups:   [],
+  students: [],
+  payments: [],
+  userEmail: '',
   hideRevenue: LS.get('em_hideRev', true),
   page: 'dashboard',
   subjectId: null,   // when viewing groups inside a subject
@@ -195,13 +172,55 @@ let state = {
   studentId: null,   // when viewing payment grid for a student (modal)
 };
 
-function save(){
-  LS.set('em_subjects',state.subjects);
-  LS.set('em_groups',state.groups);
-  LS.set('em_students',state.students);
-  LS.set('em_payments',state.payments);
-  LS.set('em_hideRev',state.hideRevenue);
+// Ma'lumotlarni to'g'rilash (eski/yetishmayotgan maydonlar uchun)
+function normalizeState(){
+  state.students.forEach(s=>{
+    if(!s.joinDate) s.joinDate = new Date(s.createdAt||Date.now()).toISOString().slice(0,10);
+  });
+  state.payments.forEach(p=>{
+    if(!p.monthKey){
+      const d=new Date(p.paymentDate||p.createdAt||Date.now());
+      p.monthKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    }
+  });
 }
+
+// ============== SERVER BILAN ISHLASH ==============
+async function loadAll(){
+  const {data,error} = await sb.from('em_data').select('key,value');
+  if(error) throw error;
+  const m = {}; (data||[]).forEach(r=>{ m[r.key]=r.value; });
+  const arr = v => Array.isArray(v) ? v : [];
+  state.subjects = arr(m.subjects);
+  state.groups   = arr(m.groups);
+  state.students = arr(m.students);
+  state.payments = arr(m.payments);
+  normalizeState();
+}
+
+let saveChain = Promise.resolve();
+let pendingSaves = 0;
+function save(){
+  if(!sb) return;
+  // Joriy holatning nusxasi (keyingi o'zgarishlar bilan aralashib ketmasligi uchun)
+  const rows = [
+    {key:'subjects', value:JSON.parse(JSON.stringify(state.subjects))},
+    {key:'groups',   value:JSON.parse(JSON.stringify(state.groups))},
+    {key:'students', value:JSON.parse(JSON.stringify(state.students))},
+    {key:'payments', value:JSON.parse(JSON.stringify(state.payments))},
+  ].map(r=>({...r, updated_at:new Date().toISOString()}));
+  pendingSaves++;
+  saveChain = saveChain.then(async()=>{
+    try{
+      const {error} = await sb.from('em_data').upsert(rows,{onConflict:'key'});
+      if(error) throw error;
+    }catch(e){
+      console.error('Saqlash xatosi',e);
+      toast("Saqlanmadi! Internetni tekshiring va sahifani yangilamang");
+    }finally{ pendingSaves--; }
+  });
+}
+window.addEventListener('beforeunload', e=>{ if(pendingSaves>0){ e.preventDefault(); e.returnValue=''; } });
 
 const fmt = n => new Intl.NumberFormat('uz-UZ').format(Math.round(n||0));
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -248,17 +267,33 @@ function calcHtml(joinDate,wd,fee){
 }
 
 // ============== LOGIN ==============
-document.getElementById('loginForm').addEventListener('submit', e=>{
+function showLoginError(msg){
+  const er=document.getElementById('loginError');
+  er.textContent=msg; er.classList.remove('hidden');
+  setTimeout(()=>er.classList.add('hidden'),4000);
+}
+document.getElementById('loginForm').addEventListener('submit', async e=>{
   e.preventDefault();
+  if(!sb){ showLoginError("Supabase sozlanmagan: manager.html ichidagi SUPABASE_URL va SUPABASE_ANON_KEY ni to'ldiring"); return; }
   const u=document.getElementById('loginUser').value.trim();
   const p=document.getElementById('loginPass').value;
-  if(u===CRED.username && p===CRED.password){
-    LS.set('em_session', {user:u, ts:Date.now()});
-    showApp();
-  } else { const er=document.getElementById('loginError'); er.classList.remove('hidden'); setTimeout(()=>er.classList.add('hidden'),2500);}
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true; btn.textContent='Kirilmoqda...';
+  try{
+    const {error}=await sb.auth.signInWithPassword({email:u,password:p});
+    if(error){ showLoginError('Email yoki parol xato'); return; }
+    await startApp();
+  }catch(err){
+    console.error(err); showLoginError('Ulanishda xato. Internetni tekshiring');
+  }finally{
+    btn.disabled=false; btn.textContent='Kirish';
+    document.getElementById('loginPass').value='';
+  }
 });
-document.getElementById('logoutBtn').addEventListener('click', ()=>{
-  localStorage.removeItem('em_session'); location.reload();
+document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+  if(pendingSaves>0 && !confirm("Saqlanmagan o'zgarishlar bor. Baribir chiqasizmi?")) return;
+  try{ if(sb) await sb.auth.signOut(); }catch{}
+  location.reload();
 });
 
 // ============== DARK MODE ==============
@@ -274,7 +309,24 @@ function showApp(){
   document.getElementById('app').classList.remove('hidden');
   renderNav(); renderPage();
 }
-window.addEventListener('DOMContentLoaded',()=>{ if(LS.get('em_session')) showApp(); });
+async function startApp(){
+  try{
+    const {data:{user}} = await sb.auth.getUser();
+    if(!user) throw new Error('no user');
+    state.userEmail = user.email || '';
+    await loadAll();
+    showApp();
+  }catch(err){
+    console.error(err);
+    try{ await sb.auth.signOut(); }catch{}
+    showLoginError("Ma'lumotni yuklab bo'lmadi yoki bu hisobga ruxsat yo'q");
+  }
+}
+window.addEventListener('DOMContentLoaded', async ()=>{
+  if(!sb){ showLoginError("Supabase sozlanmagan: SUPABASE_URL va SUPABASE_ANON_KEY ni to'ldiring"); return; }
+  const {data:{session}} = await sb.auth.getSession();
+  if(session) await startApp();
+});
 
 // ============== NAV ==============
 const PAGES = [
@@ -484,7 +536,7 @@ function statCard(label,value,color,icon){
     <div class="text-2xl font-bold mt-1">${value}</div>
   </div>`;
 }
-function toggleRev(){ state.hideRevenue=!state.hideRevenue; save(); renderDashboard(); }
+function toggleRev(){ state.hideRevenue=!state.hideRevenue; LS.set('em_hideRev',state.hideRevenue); renderDashboard(); }
 
 // ============== SUBJECTS ==============
 function renderSubjects(){
@@ -1020,7 +1072,7 @@ function renderSettings(){
     <div class="glass rounded-3xl p-6 space-y-4">
       <h3 class="font-bold text-lg">Sozlamalar</h3>
       <div class="grid sm:grid-cols-3 gap-4">
-        <div class="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10"><div class="text-sm text-slate-500">Foydalanuvchi</div><div class="font-bold">${CRED.username}</div></div>
+        <div class="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10"><div class="text-sm text-slate-500">Foydalanuvchi</div><div class="font-bold">${escapeHtml(state.userEmail)}</div></div>
         <div class="p-4 rounded-2xl bg-violet-50 dark:bg-violet-500/10"><div class="text-sm text-slate-500">Yozuvlar</div><div class="font-bold">${state.subjects.length+state.groups.length+state.students.length+state.payments.length}</div></div>
         <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10"><div class="text-sm text-slate-500">Versiya</div><div class="font-bold">2.0</div></div>
       </div>
@@ -1030,9 +1082,14 @@ function renderSettings(){
           Backup'dan tiklash
           <input type="file" accept=".json" onchange="importData(event)" class="hidden"/>
         </label>
-        <button onclick="if(confirm('Barcha ma\\'lumotlar o\\'chiriladi!')){localStorage.clear();location.reload();}" class="px-5 py-3 rounded-2xl font-semibold bg-red-500 text-white hover:bg-red-600">Hammasini tozalash</button>
+        <button onclick="resetAll()" class="px-5 py-3 rounded-2xl font-semibold bg-red-500 text-white hover:bg-red-600">Hammasini tozalash</button>
       </div>
     </div>`;
+}
+function resetAll(){
+  if(prompt("DIQQAT: serverdagi BARCHA ma'lumotlar o'chadi! Tasdiqlash uchun TOZALASH deb yozing:")!=='TOZALASH')return;
+  state.subjects=[];state.groups=[];state.students=[];state.payments=[];
+  save();renderPage();toast("Barcha ma'lumotlar tozalandi");
 }
 function exportData(){
   const blob=new Blob([JSON.stringify({subjects:state.subjects,groups:state.groups,students:state.students,payments:state.payments},null,2)],{type:'application/json'});
@@ -1041,8 +1098,10 @@ function exportData(){
 function importData(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);
-    state.subjects=d.subjects||[];state.groups=d.groups||[];state.students=d.students||[];state.payments=d.payments||[];
-    save();renderPage();toast('Tiklandi');}catch{toast('Xato!');}};r.readAsText(f);
+    const A=v=>Array.isArray(v)?v:[];
+    if(!confirm("Serverdagi hozirgi ma'lumotlar backup bilan almashtiriladi. Davom etasizmi?"))return;
+    state.subjects=A(d.subjects);state.groups=A(d.groups);state.students=A(d.students);state.payments=A(d.payments);
+    normalizeState();save();renderPage();toast('Tiklandi');}catch{toast('Xato!');}};r.readAsText(f);
 }
 
 // ============== UTILS ==============
