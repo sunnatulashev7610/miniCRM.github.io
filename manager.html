@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EduManager Pro CRM</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  tailwind.config = { darkMode: 'class', theme: { extend: {
+    animation: {
+      'fade-in':'fadeIn .5s ease-out','slide-up':'slideUp .5s ease-out',
+      'pulse-alert':'pulseAlert 1.8s infinite','scale-hover':'scaleHover .3s ease-out',
+    },
+    keyframes: {
+      fadeIn:{'0%':{opacity:0},'100%':{opacity:1}},
+      slideUp:{'0%':{opacity:0,transform:'translateY(20px)'},'100%':{opacity:1,transform:'translateY(0)'}},
+      pulseAlert:{'0%,100%':{boxShadow:'0 0 0 0 rgba(239,68,68,.7)'},'50%':{boxShadow:'0 0 0 12px rgba(239,68,68,0)'}},
+      scaleHover:{'0%':{transform:'scale(1)'},'100%':{transform:'scale(1.03)'}},
+    }
+  }}}
+</script>
+<style>
+  body{font-family:'Inter',system-ui,sans-serif}
+  .glass{background:rgba(255,255,255,.6);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.5)}
+  .dark .glass{background:rgba(15,23,42,.55);border:1px solid rgba(255,255,255,.08)}
+  .glass-strong{background:rgba(255,255,255,.85);backdrop-filter:blur(24px)}
+  .dark .glass-strong{background:rgba(15,23,42,.75)}
+  .neon-glow{box-shadow:0 0 30px rgba(139,92,246,.35),0 10px 40px -10px rgba(99,102,241,.4)}
+  .hover-lift{transition:all .35s cubic-bezier(.4,0,.2,1)}
+  .hover-lift:hover{transform:translateY(-4px);box-shadow:0 20px 40px -15px rgba(99,102,241,.35)}
+  .gradient-text{background:linear-gradient(135deg,#6366f1,#a855f7,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bg-app{background:linear-gradient(135deg,#eef2ff 0%,#f8fafc 50%,#f5f3ff 100%)}
+  .dark .bg-app{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%)}
+  .sidebar-item{transition:all .25s}
+  .sidebar-item:hover{background:rgba(99,102,241,.1);transform:translateX(4px)}
+  .sidebar-item.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;box-shadow:0 8px 25px -8px rgba(99,102,241,.6)}
+  .input-field{background:rgba(255,255,255,.7);border:1px solid rgba(203,213,225,.6);transition:all .2s}
+  .input-field:focus{border-color:#6366f1;box-shadow:0 0 0 4px rgba(99,102,241,.15);outline:none;background:rgba(255,255,255,.95)}
+  .dark .input-field{background:rgba(30,41,59,.6);border-color:rgba(71,85,105,.5);color:#f1f5f9}
+  .btn-primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;transition:all .3s}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px -10px rgba(99,102,241,.7)}
+  .table-row{transition:all .2s}
+  .table-row:hover{background:rgba(99,102,241,.06)}
+  .dark .table-row:hover{background:rgba(139,92,246,.1)}
+  .month-cell{transition:all .2s;cursor:pointer}
+  .month-cell:hover{transform:scale(1.05)}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(#6366f1,#a855f7);border-radius:10px}
+</style>
+</head>
+<body class="bg-app min-h-screen text-slate-800 dark:text-slate-100 transition-colors">
+
+<!-- LOGIN -->
+<div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-app">
+  <div class="glass-strong rounded-3xl p-10 w-full max-w-md mx-4 neon-glow animate-fade-in">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-600 mb-4 neon-glow">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12 12 0 01.01 5.84L12 19l-6.17-2.582a12 12 0 01.01-5.84L12 14z"/></svg>
+      </div>
+      <h1 class="text-3xl font-bold gradient-text">EduManager Pro</h1>
+      <p class="text-slate-500 dark:text-slate-400 mt-2 text-sm">Ta'lim markazi boshqaruv tizimi</p>
+    </div>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="text-sm font-medium block mb-2">Username</label>
+        <input id="loginUser" type="text" class="input-field w-full px-4 py-3 rounded-2xl" placeholder="username" autocomplete="username"/>
+      </div>
+      <div>
+        <label class="text-sm font-medium block mb-2">Parol</label>
+        <input id="loginPass" type="password" class="input-field w-full px-4 py-3 rounded-2xl" placeholder="********" autocomplete="current-password"/>
+      </div>
+      <div id="loginError" class="hidden text-sm text-red-500 bg-red-50 dark:bg-red-500/10 px-4 py-2 rounded-xl">Login yoki parol xato</div>
+      <button type="submit" class="btn-primary w-full py-3 rounded-2xl font-semibold">Kirish</button>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <div class="flex min-h-screen">
+    <aside id="sidebar" class="hidden flex-col w-72 p-6 glass glass-strong rounded-3xl fixed top-4 left-4 z-40 shadow-2xl animate-fade-in h-[calc(100vh-2rem)]">
+      <div class="flex items-center gap-3 mb-10">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center neon-glow">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>
+        </div>
+        <div>
+          <div class="font-bold text-lg gradient-text">EduManager</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Pro CRM</div>
+        </div>
+      </div>
+      <nav class="flex-1 space-y-2" id="navMenu"></nav>
+      <button id="logoutBtn" class="mt-4 w-full px-4 py-3 rounded-2xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition flex items-center gap-3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Chiqish
+      </button>
+    </aside>
+
+    <main class="flex-1 p-4 lg:p-6 min-w-0">
+      <div class="glass rounded-3xl p-4 mb-6 flex items-center justify-between gap-4">
+        <button id="mobileNavBtn" class="p-2 rounded-xl hover:bg-indigo-100 dark:hover:bg-slate-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="flex-1 min-w-0">
+          <div id="breadcrumb" class="text-xs text-slate-500 mb-0.5"></div>
+          <h2 id="pageTitle" class="text-xl lg:text-2xl font-bold truncate">Dashboard</h2>
+        </div>
+        <button id="darkToggle" class="p-3 rounded-2xl glass hover-lift">
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <div class="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-700">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold">F</div>
+          <div class="hidden md:block">
+            <div class="font-semibold text-sm">Firdavs</div>
+            <div class="text-xs text-slate-500">Admin</div>
+          </div>
+        </div>
+      </div>
+      <div id="pageContent" class="space-y-6"></div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+  <div class="glass-strong rounded-3xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slide-up">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="modalTitle" class="text-xl font-bold"></h3>
+      <button onclick="closeModal()" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div id="toast" class="hidden fixed top-6 right-6 z-50 glass-strong px-6 py-4 rounded-2xl shadow-2xl animate-slide-up">
+  <div id="toastMsg" class="font-medium"></div>
+</div>
+
+<script>
+// ============== STORAGE ==============
+const LS = {
+  get:(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v);}catch{return d}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn('LS blocked',e)}}
+};
+const CRED = { username:'firdavsulashev', password:'firdavs56' };
+
+// ============== MIGRATION ==============
+// Old shape compatibility
+(function migrate(){
+  const oldGroups = LS.get('em_groups', null);
+  if(oldGroups && !LS.get('em_subjects', null)){
+    // create one "Umumiy" subject and link
+    const subjId = 'sj_default';
+    LS.set('em_subjects', [{id:subjId, name:'Umumiy fan', description:'Avtomatik yaratilgan', createdAt:Date.now()}]);
+    const updated = oldGroups.map(g => ({...g, subjectId: g.subjectId || subjId, monthlyFee: g.monthlyFee || g.price || 0}));
+    LS.set('em_groups', updated);
+  }
+  // Ensure students have joinDate
+  const studs = LS.get('em_students', null);
+  if(studs){
+    let changed=false;
+    studs.forEach(s=>{
+      if(!s.joinDate){ s.joinDate = new Date(s.createdAt||Date.now()).toISOString().slice(0,10); changed=true; }
+    });
+    if(changed) LS.set('em_students', studs);
+  }
+  // payments: ensure monthKey
+  const pays = LS.get('em_payments', null);
+  if(pays){
+    let changed=false;
+    pays.forEach(p=>{
+      if(!p.monthKey){
+        const d=new Date(p.paymentDate||p.createdAt||Date.now());
+        p.monthKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+        changed=true;
+      }
+    });
+    if(changed) LS.set('em_payments', pays);
+  }
+})();
+
+// ============== STATE ==============
+let state = {
+  subjects: LS.get('em_subjects', []),
+  groups:   LS.get('em_groups', []),
+  students: LS.get('em_students', []),
+  payments: LS.get('em_payments', []),
+  hideRevenue: LS.get('em_hideRev', true),
+  page: 'dashboard',
+  subjectId: null,   // when viewing groups inside a subject
+  groupId: null,     // when viewing students inside a group
+  studentId: null,   // when viewing payment grid for a student (modal)
+};
+
+function save(){
+  LS.set('em_subjects',state.subjects);
+  LS.set('em_groups',state.groups);
+  LS.set('em_students',state.students);
+  LS.set('em_payments',state.payments);
+  LS.set('em_hideRev',state.hideRevenue);
+}
+
+const fmt = n => new Intl.NumberFormat('uz-UZ').format(Math.round(n||0));
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const today = () => new Date();
+const ymd = d => { const x=new Date(d); return x.toISOString().slice(0,10);};
+const monthKey = d => { const x=new Date(d); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'); };
+const monthLabel = mk => {
+  const [y,m]=mk.split('-').map(Number);
+  return new Date(y,m-1,1).toLocaleDateString('uz-UZ',{month:'short',year:'numeric'});
+};
+
+
+// ============== DARS KUNLARI / BIRINCHI OY HISOBI ==============
+const WD=[{n:1,l:'Du'},{n:2,l:'Se'},{n:3,l:'Ch'},{n:4,l:'Pa'},{n:5,l:'Ju'},{n:6,l:'Sh'},{n:0,l:'Ya'}];
+const pd=s=>{const[a,b,c]=String(s).split('-').map(Number);return new Date(a,b-1,c);};
+const dmy=d=>String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();
+const dayLabels=wd=>WD.filter(x=>(wd||[]).includes(x.n)).map(x=>x.l).join(', ');
+function countLessons(wd,from,to){let n=0;for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1))if(wd.includes(d.getDay()))n++;return n;}
+// Kelgan oy uchun: oy ichidagi jami darslar, qolgan darslar, 1 dars narxi, birinchi oy summasi
+function firstMonthInfo(joinDate,wd,fee){
+  if(!joinDate||!wd||!wd.length||!fee)return null;
+  const j=pd(joinDate),y=j.getFullYear(),m=j.getMonth(),end=new Date(y,m+1,0);
+  const total=countLessons(wd,new Date(y,m,1),end), left=countLessons(wd,j,end);
+  const per=total?fee/total:0;
+  return {total,left,per,amount:Math.round(per*left),partial:j.getDate()>1};
+}
+function feeForMonth(s,mk){
+  const fee=studentMonthlyFee(s), i=firstMonthInfo(s.joinDate,s.weekdays,fee);
+  return (i&&i.partial&&mk===monthKey(pd(s.joinDate)))?i.amount:fee;
+}
+function calcHtml(joinDate,wd,fee){
+  const i=firstMonthInfo(joinDate,wd,fee);
+  if(!i)return `<div class="text-xs text-slate-400">Dars kunlari yoki oylik narx kiritilmagan — hisob-kitob ko'rsatilmaydi.</div>`;
+  const j=pd(joinDate),nx=new Date(j.getFullYear(),j.getMonth()+1,1);
+  const nxTotal=countLessons(wd,nx,new Date(nx.getFullYear(),nx.getMonth()+1,0)), nxPer=nxTotal?fee/nxTotal:0;
+  const first=i.partial
+    ? `<div class="flex justify-between gap-2"><span>1-oy: <b>${dmy(j)}</b> dan oy oxirigacha<br><span class="text-xs text-slate-500">${i.left} ta dars × ${fmt(i.per)} so'm (oyda ${i.total} ta dars)</span></span><b class="text-violet-600 dark:text-violet-300 whitespace-nowrap">${fmt(i.amount)} so'm</b></div>`
+    : `<div class="flex justify-between gap-2"><span>1-oy to'liq (1-sanadan kelgan)</span><b class="whitespace-nowrap">${fmt(fee)} so'm</b></div>`;
+  return `<div class="rounded-2xl p-3 bg-indigo-50 dark:bg-indigo-500/10 text-sm space-y-2">
+    <div class="font-semibold">Hisob-kitob · ${dayLabels(wd)} (haftada ${wd.length} kun)</div>
+    ${first}
+    <div class="flex justify-between gap-2 border-t border-indigo-200/60 dark:border-slate-600 pt-2"><span>Keyingi oydan (<b>${dmy(nx)}</b>):<br><span class="text-xs text-slate-500">har bir dars (kunlik) ≈ ${fmt(nxPer)} so'm · oyda ${nxTotal} ta dars</span></span><b class="whitespace-nowrap">${fmt(fee)} so'm/oy</b></div>
+  </div>`;
+}
+
+// ============== LOGIN ==============
+document.getElementById('loginForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  if(u===CRED.username && p===CRED.password){
+    LS.set('em_session', {user:u, ts:Date.now()});
+    showApp();
+  } else { const er=document.getElementById('loginError'); er.classList.remove('hidden'); setTimeout(()=>er.classList.add('hidden'),2500);}
+});
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  localStorage.removeItem('em_session'); location.reload();
+});
+
+// ============== DARK MODE ==============
+if(LS.get('em_dark', false)) document.documentElement.classList.add('dark');
+document.getElementById('darkToggle').addEventListener('click', ()=>{
+  document.documentElement.classList.toggle('dark');
+  LS.set('em_dark', document.documentElement.classList.contains('dark'));
+  renderPage();
+});
+
+function showApp(){
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  renderNav(); renderPage();
+}
+window.addEventListener('DOMContentLoaded',()=>{ if(LS.get('em_session')) showApp(); });
+
+// ============== NAV ==============
+const PAGES = [
+  {id:'dashboard',name:'Dashboard',icon:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'},
+  {id:'subjects',name:'Fanlar',icon:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'},
+  {id:'payments',name:"To'lovlar",icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'},
+  {id:'debtors',name:'Qarzdorlar',icon:'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'},
+  {id:'statistika',name:'Statistika',icon:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'},
+  {id:'settings',name:'Sozlamalar',icon:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z'},
+];
+
+function renderNav(){
+  document.getElementById('navMenu').innerHTML = PAGES.map(p=>`
+    <button onclick="goto('${p.id}')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left text-sm font-medium ${state.page===p.id?'active':''}">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${p.icon}"/></svg>
+      ${p.name}
+    </button>`).join('');
+}
+function closeSidebar(){
+  const sb=document.getElementById('sidebar');
+  sb.classList.add('hidden'); sb.classList.remove('flex');
+}
+function goto(p){ state.page=p; state.subjectId=null; state.groupId=null; renderNav(); renderPage(); window.scrollTo(0,0); closeSidebar();}
+document.getElementById('mobileNavBtn').addEventListener('click',e=>{
+  e.stopPropagation();
+  document.getElementById('sidebar').classList.toggle('hidden');
+  document.getElementById('sidebar').classList.toggle('flex');
+});
+// Menyudan tashqariga bosilsa yoki Esc bosilsa yopiladi
+document.addEventListener('click',e=>{
+  const sb=document.getElementById('sidebar');
+  if(!sb.classList.contains('hidden') && !sb.contains(e.target)) closeSidebar();
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSidebar(); });
+
+// ============== FINANCE / DEBT LOGIC ==============
+// For each student, generate list of expected months from joinDate to current month.
+// Each month has a required amount = monthlyFee (override) or group.monthlyFee.
+// Paid amount = sum of payments with monthKey === that month.
+// If paid < required → debt.
+
+function studentMonthlyFee(s){
+  if(s.monthlyFee && Number(s.monthlyFee)>0) return Number(s.monthlyFee);
+  const g = state.groups.find(g=>g.id===s.groupId);
+  return Number((g&&g.monthlyFee)||0);
+}
+
+// Number of future months to always show beyond the current month.
+// Change FUTURE_MONTHS_AHEAD to extend the visible payment timeline further.
+const FUTURE_MONTHS_AHEAD = 12;
+function expectedMonthsForStudent(s){
+  const out=[];
+  if(!s.joinDate) return out;
+  const start = new Date(s.joinDate);
+  const now = today();
+  // End = current month + FUTURE_MONTHS_AHEAD months ahead
+  let endY = now.getFullYear();
+  let endM = now.getMonth() + FUTURE_MONTHS_AHEAD;
+  endY += Math.floor(endM/12);
+  endM = ((endM%12)+12)%12;
+  // Also include any month that already has a payment (in case it's beyond the window)
+  const payMonths = state.payments
+    .filter(p=>p.studentId===s.id && p.monthKey)
+    .map(p=>p.monthKey);
+  payMonths.forEach(mk=>{
+    const [py,pm]=mk.split('-').map(Number);
+    if(py>endY || (py===endY && (pm-1)>endM)){ endY=py; endM=pm-1; }
+  });
+  let y=start.getFullYear(), m=start.getMonth();
+  while(y<endY || (y===endY && m<=endM)){
+    out.push(y+'-'+String(m+1).padStart(2,'0'));
+    m++; if(m>11){m=0;y++;}
+  }
+  return out;
+}
+
+function paidForMonth(studentId, mk){
+  return state.payments
+    .filter(p=>p.studentId===studentId && p.monthKey===mk)
+    .reduce((s,p)=>s+Number(p.amount||0),0);
+}
+
+function studentMonthsStatus(s){
+  const curMk = monthKey(today());
+  return expectedMonthsForStudent(s).map(mk=>{
+    const fee = feeForMonth(s, mk);
+    const paid = paidForMonth(s.id, mk);
+    // Future months (keyingi oylar) qarzdor hisoblanmaydi — faqat hozirgi va o'tgan oylar.
+    const isFuture = mk > curMk;
+    const debt = isFuture ? 0 : Math.max(0, fee-paid);
+    return { mk, fee, paid, debt, isFuture, status: paid>=fee?'paid':(paid>0?'partial':(isFuture?'upcoming':'unpaid')) };
+  });
+}
+
+function studentTotalDebt(s){
+  if(s.status==='inactive') return 0;
+  return studentMonthsStatus(s).reduce((sum,m)=>sum+m.debt,0);
+}
+
+function currentMonthRevenue(){
+  const mk = monthKey(today());
+  return state.payments.filter(p=>p.monthKey===mk).reduce((s,p)=>s+Number(p.amount||0),0);
+}
+function totalRevenue(){ return state.payments.reduce((s,p)=>s+Number(p.amount||0),0); }
+function totalDebtors(){ return state.students.filter(s=>s.status!=='inactive' && studentTotalDebt(s)>0).length; }
+function totalOutstandingDebt(){ return state.students.filter(s=>s.status!=='inactive').reduce((s,st)=>s+studentTotalDebt(st),0); }
+
+// ============== RENDER ROUTER ==============
+function renderPage(){
+  // Determine title + breadcrumb
+  let title='Dashboard', crumb='';
+  if(state.page==='dashboard') title='Dashboard';
+  else if(state.page==='subjects'){
+    if(state.groupId){
+      const g=state.groups.find(g=>g.id===state.groupId);
+      const sj=state.subjects.find(s=>s.id===(g&&g.subjectId));
+      title = g?g.name:'Guruh';
+      crumb = `<a class="hover:text-indigo-500 cursor-pointer" onclick="goto('subjects')">Fanlar</a> › <a class="hover:text-indigo-500 cursor-pointer" onclick="openSubject('${sj?sj.id:''}')">${sj?sj.name:'—'}</a> › ${g?g.name:''}`;
+    } else if(state.subjectId){
+      const sj=state.subjects.find(s=>s.id===state.subjectId);
+      title = sj?sj.name:'Fan';
+      crumb = `<a class="hover:text-indigo-500 cursor-pointer" onclick="goto('subjects')">Fanlar</a> › ${sj?sj.name:''}`;
+    } else { title = 'Fanlar'; }
+  }
+  else { const p=PAGES.find(p=>p.id===state.page); if(p) title=p.name; }
+  document.getElementById('pageTitle').textContent = title;
+  document.getElementById('breadcrumb').innerHTML = crumb;
+
+  const c=document.getElementById('pageContent');
+  c.classList.remove('animate-fade-in'); void c.offsetWidth; c.classList.add('animate-fade-in');
+
+  if(state.page==='dashboard') renderDashboard();
+  else if(state.page==='subjects'){
+    if(state.groupId) renderGroupDetail();
+    else if(state.subjectId) renderSubjectDetail();
+    else renderSubjects();
+  }
+  else if(state.page==='payments') renderPayments();
+  else if(state.page==='debtors') renderDebtors();
+  else if(state.page==='statistika') renderStats();
+  else if(state.page==='settings') renderSettings();
+}
+
+// ============== DASHBOARD ==============
+function renderDashboard(){
+  const hide=state.hideRevenue;
+  const rev=currentMonthRevenue(), total=totalRevenue();
+  const debtors = state.students.filter(s=>s.status!=='inactive' && studentTotalDebt(s)>0)
+    .sort((a,b)=>studentTotalDebt(b)-studentTotalDebt(a)).slice(0,6);
+
+  document.getElementById('pageContent').innerHTML=`
+    ${debtors.length?`
+    <div class="glass rounded-3xl p-6 border-l-4 border-red-500 animate-slide-up">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse-alert"></span>
+        <h3 class="font-bold text-lg">Eng katta qarzdorlar</h3>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        ${debtors.map(s=>{
+          const g=state.groups.find(g=>g.id===s.groupId);
+          const months = studentMonthsStatus(s).filter(m=>m.debt>0);
+          return `<div onclick="openStudentPayments('${s.id}')" class="p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 cursor-pointer hover-lift">
+            <div class="font-semibold">${escapeHtml(s.fullName)}</div>
+            <div class="text-xs text-slate-500 mt-1">${g?escapeHtml(g.name):'—'} • ${months.length} oy qarz</div>
+            <div class="mt-2 text-red-600 dark:text-red-400 font-bold">${fmt(studentTotalDebt(s))} so'm</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`:''}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      ${statCard("Fanlar", state.subjects.length, 'indigo','M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253')}
+      ${statCard("Guruhlar", state.groups.length, 'violet','M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2')}
+      ${statCard("O'quvchilar", state.students.length,'emerald','M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-5.13a4 4 0 11-8 0 4 4 0 018 0z')}
+      ${statCard("Qarzdorlar", totalDebtors(),'rose','M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z')}
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div class="glass rounded-3xl p-6 hover-lift">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <div class="text-sm text-slate-500">Joriy oy tushum</div>
+            <div class="text-3xl font-bold gradient-text mt-1">${hide?"•••••••• so'm":(fmt(rev)+" so'm")}</div>
+          </div>
+          <button onclick="toggleRev()" class="p-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white neon-glow">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${hide?'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.5 12C3.7 7.9 7.5 5 12 5s8.3 2.9 9.5 7c-1.2 4.1-5 7-9.5 7s-8.3-2.9-9.5-7z':'M13.9 18.8A10 10 0 0112 19c-4.5 0-8.3-2.9-9.5-7a10 10 0 011.6-3M3 3l18 18'}"/></svg>
+          </button>
+        </div>
+        <div class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">Umumiy: ${hide?"••••••••":fmt(total)+" so'm"}</div>
+      </div>
+      <div class="glass rounded-3xl p-6 hover-lift">
+        <div class="text-sm text-slate-500">Umumiy qarz</div>
+        <div class="text-3xl font-bold text-red-500 mt-1">${fmt(totalOutstandingDebt())} so'm</div>
+        <div class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/50">${totalDebtors()} ta o'quvchi qarzdor</div>
+      </div>
+    </div>
+
+    `;
+}
+function statCard(label,value,color,icon){
+  const colors={indigo:'from-indigo-500 to-blue-500',violet:'from-violet-500 to-purple-500',rose:'from-rose-500 to-pink-500',emerald:'from-emerald-500 to-teal-500'};
+  return `<div class="glass rounded-3xl p-5 hover-lift">
+    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${colors[color]} flex items-center justify-center mb-3">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${icon}"/></svg>
+    </div>
+    <div class="text-xs text-slate-500">${label}</div>
+    <div class="text-2xl font-bold mt-1">${value}</div>
+  </div>`;
+}
+function toggleRev(){ state.hideRevenue=!state.hideRevenue; save(); renderDashboard(); }
+
+// ============== SUBJECTS ==============
+function renderSubjects(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex justify-end">
+      <button onclick="openSubjectModal()" class="btn-primary px-5 py-3 rounded-2xl font-semibold flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Fan qo'shish
+      </button>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      ${state.subjects.length?state.subjects.map(sj=>{
+        const grs=state.groups.filter(g=>g.subjectId===sj.id);
+        const studCount = state.students.filter(s=>grs.some(g=>g.id===s.groupId)).length;
+        return `<div class="glass rounded-3xl p-5 hover-lift cursor-pointer" onclick="openSubject('${sj.id}')">
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-2xl font-bold">${escapeHtml(sj.name.charAt(0).toUpperCase())}</div>
+            <div class="flex gap-1" onclick="event.stopPropagation()">
+              <button onclick="openSubjectModal('${sj.id}')" class="p-2 rounded-xl hover:bg-indigo-100 dark:hover:bg-slate-700 text-indigo-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 15H9v-2.8l8.6-8.6z"/></svg></button>
+              <button onclick="deleteSubject('${sj.id}')" class="p-2 rounded-xl hover:bg-red-100 text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7"/></svg></button>
+            </div>
+          </div>
+          <div class="font-bold text-lg">${escapeHtml(sj.name)}</div>
+          <div class="text-sm text-slate-500 mt-1">${escapeHtml(sj.description||'')}</div>
+          <div class="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/50 text-sm">
+            <span>${grs.length} guruh</span><span>${studCount} o'quvchi</span>
+          </div>
+        </div>`;
+      }).join(''):`<div class="col-span-full text-center py-16 text-slate-400 glass rounded-3xl">Fanlar mavjud emas. Yangi fan qo'shing.</div>`}
+    </div>`;
+}
+function openSubject(id){ state.subjectId=id; state.groupId=null; renderPage(); }
+function openSubjectModal(id){
+  const sj = id?state.subjects.find(x=>x.id===id):{name:'',description:''};
+  document.getElementById('modalTitle').textContent = id?'Fanni tahrirlash':'Fan qo\'shish';
+  document.getElementById('modalBody').innerHTML=`
+    <form id="subjForm" class="space-y-3">
+      <div><label class="text-sm font-medium block mb-1">Fan nomi *</label><input name="name" required value="${escapeAttr(sj.name||'')}" class="input-field w-full px-4 py-2.5 rounded-xl"/></div>
+      <div><label class="text-sm font-medium block mb-1">Tavsif</label><textarea name="description" rows="2" class="input-field w-full px-4 py-2.5 rounded-xl">${escapeHtml(sj.description||'')}</textarea></div>
+      <button class="btn-primary w-full py-3 rounded-xl font-semibold">${id?'Saqlash':"Qo'shish"}</button>
+    </form>`;
+  openModal();
+  document.getElementById('subjForm').addEventListener('submit',e=>{
+    e.preventDefault();const fd=new FormData(e.target);
+    const data={name:fd.get('name').trim(),description:fd.get('description').trim()};
+    if(!data.name)return;
+    if(id){Object.assign(state.subjects.find(x=>x.id===id),data);toast('Yangilandi');}
+    else{state.subjects.push({id:uid(),...data,createdAt:Date.now()});toast("Fan qo'shildi");}
+    save();closeModal();renderPage();
+  });
+}
+function deleteSubject(id){
+  const grs=state.groups.filter(g=>g.subjectId===id);
+  if(grs.length){ if(!confirm(`Bu fanda ${grs.length} guruh bor. Hammasi va o'quvchilari o'chiriladi. Davom etilsinmi?`))return; }
+  else if(!confirm("Fanni o'chirasizmi?"))return;
+  const grIds=grs.map(g=>g.id);
+  const stIds=state.students.filter(s=>grIds.includes(s.groupId)).map(s=>s.id);
+  state.subjects=state.subjects.filter(s=>s.id!==id);
+  state.groups=state.groups.filter(g=>g.subjectId!==id);
+  state.students=state.students.filter(s=>!stIds.includes(s.id));
+  state.payments=state.payments.filter(p=>!stIds.includes(p.studentId));
+  save();renderPage();toast("O'chirildi");
+}
+
+// ============== SUBJECT DETAIL (groups list) ==============
+function renderSubjectDetail(){
+  const sj=state.subjects.find(s=>s.id===state.subjectId);
+  if(!sj){ goto('subjects'); return; }
+  const grs=state.groups.filter(g=>g.subjectId===sj.id);
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex flex-wrap gap-3 items-center justify-between">
+      <button onclick="goto('subjects')" class="px-4 py-2 rounded-2xl glass hover-lift text-sm font-medium flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Fanlarga qaytish
+      </button>
+      <button onclick="openGroupModal()" class="btn-primary px-5 py-3 rounded-2xl font-semibold flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Guruh qo'shish
+      </button>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      ${grs.length?grs.map(g=>{
+        const count=state.students.filter(s=>s.groupId===g.id).length;
+        const debt=state.students.filter(s=>s.groupId===g.id).reduce((s,st)=>s+studentTotalDebt(st),0);
+        return `<div class="glass rounded-3xl p-5 hover-lift cursor-pointer" onclick="openGroup('${g.id}')">
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold">${escapeHtml(g.name.charAt(0).toUpperCase())}</div>
+            <div class="flex gap-1" onclick="event.stopPropagation()">
+              <button onclick="openGroupModal('${g.id}')" class="p-2 rounded-xl hover:bg-indigo-100 dark:hover:bg-slate-700 text-indigo-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 15H9v-2.8l8.6-8.6z"/></svg></button>
+              <button onclick="deleteGroup('${g.id}')" class="p-2 rounded-xl hover:bg-red-100 text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7"/></svg></button>
+            </div>
+          </div>
+          <div class="font-bold text-lg">${escapeHtml(g.name)}</div>
+          <div class="text-sm text-slate-500 mt-1">${escapeHtml(g.teacher||'—')}</div>
+          <div class="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/50 text-sm">
+            <span>${count} o'quvchi</span>
+            <span class="font-bold gradient-text">${fmt(g.monthlyFee)} so'm</span>
+          </div>
+          ${debt>0?`<div class="mt-2 text-xs text-red-500 font-semibold">Qarz: ${fmt(debt)} so'm</div>`:''}
+        </div>`;
+      }).join(''):`<div class="col-span-full text-center py-16 text-slate-400 glass rounded-3xl">Bu fanda guruh yo'q</div>`}
+    </div>`;
+}
+function openGroupModal(id){
+  const g=id?state.groups.find(x=>x.id===id):{name:'',teacher:'',monthlyFee:'',subjectId:state.subjectId};
+  document.getElementById('modalTitle').textContent=id?'Guruhni tahrirlash':"Guruh qo'shish";
+  document.getElementById('modalBody').innerHTML=`
+    <form id="groupForm" class="space-y-3">
+      <div><label class="text-sm font-medium block mb-1">Fan *</label>
+        <select name="subjectId" required class="input-field w-full px-4 py-2.5 rounded-xl">
+          ${state.subjects.map(sj=>`<option value="${sj.id}" ${sj.id===g.subjectId?'selected':''}>${escapeHtml(sj.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div><label class="text-sm font-medium block mb-1">Guruh nomi *</label><input name="name" required value="${escapeAttr(g.name||'')}" class="input-field w-full px-4 py-2.5 rounded-xl"/></div>
+      <div><label class="text-sm font-medium block mb-1">O'qituvchi</label><input name="teacher" value="${escapeAttr(g.teacher||'')}" class="input-field w-full px-4 py-2.5 rounded-xl"/></div>
+      <div><label class="text-sm font-medium block mb-1">Oylik narx *</label><input name="monthlyFee" type="number" min="0" required value="${g.monthlyFee||''}" class="input-field w-full px-4 py-2.5 rounded-xl"/></div>
+      <button class="btn-primary w-full py-3 rounded-xl font-semibold">${id?'Saqlash':"Qo'shish"}</button>
+    </form>`;
+  openModal();
+  document.getElementById('groupForm').addEventListener('submit',e=>{
+    e.preventDefault();const fd=new FormData(e.target);
+    const data={subjectId:fd.get('subjectId'),name:fd.get('name').trim(),teacher:fd.get('teacher').trim(),monthlyFee:Number(fd.get('monthlyFee'))};
+    if(id){Object.assign(state.groups.find(x=>x.id===id),data);toast('Yangilandi');}
+    else{state.groups.push({id:uid(),...data,createdAt:Date.now()});toast("Guruh qo'shildi");}
+    save();closeModal();renderPage();
+  });
+}
+function deleteGroup(id){
+  const sts=state.students.filter(s=>s.groupId===id);
+  if(sts.length){ if(!confirm(`Guruhda ${sts.length} o'quvchi bor. Hammasi va to'lovlari o'chiriladi. Davom etilsinmi?`))return; }
+  else if(!confirm("Guruhni o'chirasizmi?"))return;
+  const stIds=sts.map(s=>s.id);
+  state.groups=state.groups.filter(g=>g.id!==id);
+  state.students=state.students.filter(s=>s.groupId!==id);
+  state.payments=state.payments.filter(p=>!stIds.includes(p.studentId));
+  save();renderPage();toast("O'chirildi");
+}
+
+// ============== GROUP DETAIL (students with monthly payment grid) ==============
+function openGroup(id){
+  const g=state.groups.find(g=>g.id===id);
+  if(!g)return;
+  state.page='subjects'; state.subjectId=g.subjectId; state.groupId=id;
+  renderNav(); renderPage();
+}
+function renderGroupDetail(){
+  const g=state.groups.find(g=>g.id===state.groupId);
+  if(!g){ goto('subjects'); return; }
+  const students=state.students.filter(s=>s.groupId===g.id);
+
+  // Determine month columns: union of all expected months for this group's students + current month
+  // Ko'rinadigan oylar: o'tgan 3 oy + joriy oy + keyingi 3 oy.
+  // Agar guruhda to'lamay qolib ketgan eski oy bo'lsa, jadval eng eski qarz oyidan boshlab ko'rsatiladi.
+  const t0=today(), months=[];
+  const startMk=monthKey(new Date(t0.getFullYear(),t0.getMonth()-3,1));
+  let from=startMk;
+  students.forEach(s=>{
+    if(s.status==='inactive')return;
+    const old=studentMonthsStatus(s).find(m=>m.debt>0);   // eng birinchi qarz oy
+    if(old && old.mk<from) from=old.mk;
+  });
+  const endMk=monthKey(new Date(t0.getFullYear(),t0.getMonth()+3,1));
+  for(let [y,m]=from.split('-').map(Number); (y+'-'+String(m).padStart(2,'0'))<=endMk; ){
+    months.push(y+'-'+String(m).padStart(2,'0')); m++; if(m>12){m=1;y++;}
+  }
+
+  document.getElementById('pageContent').innerHTML=`
+    <div class="flex flex-wrap gap-3 items-center justify-between">
+      <button onclick="openSubject('${g.subjectId}')" class="px-4 py-2 rounded-2xl glass hover-lift text-sm font-medium flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Guruhlarga qaytish
+      </button>
+      <div class="flex gap-2">
+        <div class="glass px-4 py-2 rounded-2xl text-sm"><span class="text-slate-500">Oylik:</span> <span class="font-bold gradient-text">${fmt(g.monthlyFee)} so'm</span></div>
+        <button onclick="openStudentModal()" class="btn-primary px-5 py-3 rounded-2xl font-semibold flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          O'quvchi qo'shish
+        </button>
+      </div>
+    </div>
+
+    <div class="glass rounded-3xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gradient-to-r from-indigo-500/10 to-violet-500/10">
+            <tr class="text-left text-xs uppercase">
+              <th class="px-2 py-2 sticky left-0 z-10 bg-indigo-50/95 dark:bg-slate-800/95">F.I.O</th>
+              <th class="px-2 py-2 whitespace-nowrap">Kunlar / O'qituvchi</th>
+              ${months.map(m=>`<th class="px-2 py-2 text-center whitespace-nowrap">${monthLabel(m)}</th>`).join('')}
+              <th class="px-2 py-2 text-right whitespace-nowrap">Qarz</th>
+              <th class="px-2 py-2 text-right">Amal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${students.length?students.map(s=>{
+              const statusList=studentMonthsStatus(s);
+              const statusMap=Object.fromEntries(statusList.map(m=>[m.mk,m]));
+              const debt=studentTotalDebt(s);
+              return `<tr class="table-row border-t border-slate-100 dark:border-slate-700/50">
+                <td class="px-2 py-1.5 font-medium sticky left-0 z-10 bg-white/95 dark:bg-slate-900/95"><div class="whitespace-nowrap">${escapeHtml(s.fullName)}${s.status==='inactive'?' <span class="text-xs text-slate-400">(nofaol)</span>':''}</div><div class="text-xs font-normal text-slate-400 whitespace-nowrap">${escapeHtml(s.phone||'—')} · ${s.joinDate||'—'}</div>${feeBadges(s)}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap"><div>${dayLabels(s.weekdays)||'—'}</div><div class="text-xs text-slate-400">${escapeHtml(s.teacher||'')}</div></td>
+                ${months.map(m=>{
+                  const st=statusMap[m];
+                  if(!st) return `<td class="px-2 py-1 text-center text-slate-300">—</td>`;
+                  const cls = st.status==='paid'?'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300':
+                              st.status==='partial'?'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300':
+                              'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300';
+                  const label = st.status==='paid'?(st.paid>st.fee&&st.fee>0?'✓+':'✓'):st.status==='partial'?'½':'✕';
+                  const tooltip = `${monthLabel(m)}: ${fmt(st.paid)}/${fmt(st.fee)} so'm`;
+                  return `<td class="px-2 py-1 text-center whitespace-nowrap"><div class="inline-flex items-center gap-0.5"><button onclick="quickPay('${s.id}','${m}')" title="${tooltip}" class="month-cell w-9 h-9 rounded-xl text-base font-bold ${cls}">${label}</button><button onclick="manualPay('${s.id}','${m}')" title="Qo'lda to'lov qo'shish" class="w-6 h-9 rounded-lg text-base text-indigo-500 hover:bg-indigo-100 dark:hover:bg-slate-700 font-bold">+</button></div></td>`;
+                }).join('')}
+                <td class="px-2 py-1.5 text-right font-bold whitespace-nowrap ${debt>0?'text-red-500':'text-emerald-500'}">${fmt(debt)}</td>
+                <td class="px-2 py-1.5 text-right whitespace-nowrap">
+                  <button onclick="openStudentPayments('${s.id}')" class="p-1 rounded-lg hover:bg-violet-100 dark:hover:bg-slate-700 text-violet-500" title="To'lovlar"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m-6 4h6m-6 4h6M5 5v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2z"/></svg></button>
+                  <button onclick="openStudentModal('${s.id}')" class="p-1 rounded-lg hover:bg-indigo-100 dark:hover:bg-slate-700 text-indigo-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 15H9v-2.8l8.6-8.6z"/></svg></button>
+                  <button onclick="deleteStudent('${s.id}')" class="p-1 rounded-lg hover:bg-red-100 text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7"/></svg></button>
+                </td>
+              </tr>`;
+            }).join(''):`<tr><td colspan="${3+months.length+1}" class="text-center py-8 text-slate-400">Guruhda o'quvchilar yo'q</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+      <div class="px-3 py-2 text-xs text-slate-500 border-t border-slate-200 dark:border-slate-700/50 flex flex-wrap gap-3">
+        <span><span class="inline-block w-2.5 h-2.5 rounded bg-emerald-300 mr-1"></span>To'liq to'langan</span>
+        <span><span class="inline-block w-2.5 h-2.5 rounded bg-amber-300 mr-1"></span>Qisman</span>
+        <span><span class="inline-block w-2.5 h-2.5 rounded bg-red-300 mr-1"></span>To'lanmagan</span>
+        <span class="ml-auto">Katakka bosing — oylik to'lovni qo'shadi · «+» — qo'lda summa kiritish</span>
+      </div>
+    </div>`;
+}
+
+// ===== Ism ostidagi HISOB: bugungacha kelgan kunlar uchun hisoblangan summa =====
+// Hisob boshlanishi: 1-sana (yoki oy o'rtasida kelgan bo'lsa kelgan sana) -> bugun.
+// Hisoblangan = o'tgan dars kunlari soni x 1 dars narxi (1 dars = oylik / oydagi jami darslar).
+function studentAccount(s,now=new Date()){
+  const fee=studentMonthlyFee(s), wd=s.weekdays||[];
+  if(!s.joinDate||!fee||!wd.length)return null;
+  const j=pd(s.joinDate), y=now.getFullYear(), m=now.getMonth(), cmk=monthKey(now);
+  const mStart=new Date(y,m,1), mEnd=new Date(y,m+1,0), today0=new Date(y,m,now.getDate());
+  const from=j>mStart?j:mStart;
+  const tot=countLessons(wd,mStart,mEnd), per=tot?fee/tot:0;
+  const done=from>today0?0:countLessons(wd,from,today0);
+  const accrued=Math.round(per*done), paid=paidForMonth(s.id,cmk);
+  const out={from,done,tot,per,accrued,paid,left:Math.max(0,accrued-paid)};
+  const fi=firstMonthInfo(s.joinDate,wd,fee);
+  if(fi&&fi.partial&&monthKey(j)<cmk)out.firstDebt=Math.max(0,fi.amount-paidForMonth(s.id,monthKey(j)));
+  return out;
+}
+function feeBadges(s){
+  const a=studentAccount(s); if(!a)return '';
+  const cls=(v,c)=>v===0?'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300':c;
+  const bd=(t,c,title)=>`<span title="${title||''}" class="px-2 py-0.5 rounded-lg text-xs font-semibold whitespace-nowrap ${c}">${t}</span>`;
+  const b=[
+    bd(`${dmy(a.from)} dan: ${a.done} dars × ${fmt(a.per)} = ${fmt(a.accrued)}`,'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',`Shu oyda oyda jami ${a.tot} ta dars`),
+    bd(`Qoldiq: ${fmt(a.left)}`,cls(a.left,'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300'),`Hisoblangan ${fmt(a.accrued)} − to'langan ${fmt(a.paid)}`)
+  ];
+  if(a.firstDebt>0)b.push(bd(`1-oy qarzi: ${fmt(a.firstDebt)}`,'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',"Kelgan oy uchun to'lanmagan qism"));
+  return `<div class="flex flex-wrap gap-1 mt-0.5">${b.join('')}</div>`;
+}
+
+// Oy ostida qo'lda summa kiritish (kam yoki ko'p bo'lishi mumkin)
+function manualPay(studentId,mk){
+  const el=document.getElementById('mp_'+studentId+'_'+mk);
+  let n;
+  if(el) n=Number(el.value);
+  else{ const v=prompt(`${monthLabel(mk)} uchun qo'shiladigan summa (so'm):`); if(v===null)return; n=Number(v); }
+  if(!(n>0)){toast('Summani kiriting');return;}
+  state.payments.push({id:uid(),studentId,amount:n,monthKey:mk,paymentDate:ymd(new Date()),createdAt:Date.now()});
+  save();renderPage();toast("To'lov qo'shildi: "+fmt(n)+" so'm");
+}
+
+// One-click pay for a month
+function quickPay(studentId, mk){
+  const s=state.students.find(x=>x.id===studentId);
+  if(!s)return;
+  const fee=feeForMonth(s,mk);
+  const paid=paidForMonth(studentId,mk);
+  const remain=Math.max(0,fee-paid);
+  if(remain<=0){
+    if(!confirm(`${monthLabel(mk)} to'liq to'langan. To'lovni bekor qilasizmi?`))return;
+    // remove latest payment for this month
+    const idx=[...state.payments].map((p,i)=>({p,i})).reverse().find(o=>o.p.studentId===studentId&&o.p.monthKey===mk);
+    if(idx){ state.payments=state.payments.filter(p=>p.id!==idx.p.id); save(); renderPage(); toast("To'lov o'chirildi"); }
+    return;
+  }
+  const amount=prompt(`${monthLabel(mk)} uchun to'lov summasi:`, remain);
+  if(amount===null)return;
+  const n=Number(amount); if(!(n>0)){toast('Xato summa');return;}
+  state.payments.push({id:uid(),studentId,amount:n,monthKey:mk,paymentDate:ymd(new Date()),createdAt:Date.now()});
+  save(); renderPage(); toast("To'lov qo'shildi");
+}
+
+// Student payments modal (all payments + per-month breakdown)
+function openStudentPayments(studentId){
+  const s=state.students.find(x=>x.id===studentId);
+  if(!s)return;
+  const months=studentMonthsStatus(s);
+  const pays=state.payments.filter(p=>p.studentId===studentId).sort((a,b)=>new Date(b.paymentDate)-new Date(a.paymentDate));
+  document.getElementById('modalTitle').textContent=`${s.fullName} — To'lovlar`;
+  document.getElementById('modalBody').innerHTML=`
+    <div class="space-y-4">
+      <div class="grid grid-cols-3 gap-2 text-center text-xs">
+        <div class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10"><div class="text-slate-500">Oylik</div><div class="font-bold">${fmt(studentMonthlyFee(s))}</div></div>
+        <div class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10"><div class="text-slate-500">To'langan</div><div class="font-bold">${fmt(pays.reduce((x,p)=>x+Number(p.amount||0),0))}</div></div>
+        <div class="p-2 rounded-xl bg-red-50 dark:bg-red-500/10"><div class="text-slate-500">Qarz</div><div class="font-bold text-red-500">${fmt(studentTotalDebt(s))}</div></div>
+      </div>
+      ${calcHtml(s.joinDate,s.weekdays,studentMonthlyFee(s))}
+      <div>
+        <div class="font-semibold mb-2 text-sm">Oylik bo'yicha (kelgan kundan)</div>
+        <div class="space-y-1 max-h-48 overflow-y-auto">
+          ${months.map(m=>{
+            const cls=m.status==='paid'?'text-emerald-500':m.status==='partial'?'text-amber-500':'text-red-500';
+            return `<div class="flex justify-between items-center p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-sm">
+              <span>${monthLabel(m.mk)}</span>
+              <span><span class="${cls} font-bold">${fmt(m.paid)}</span> / ${fmt(m.fee)} ${m.debt>0?`<button onclick="quickPay('${s.id}','${m.mk}');closeModal();" class="ml-2 text-xs px-2 py-1 rounded-lg bg-indigo-500 text-white">To'lash</button>`:''}</span>
+            </div>`;
+          }).join('')||'<div class="text-slate-400 text-sm">—</div>'}
+        </div>
+      </div>
+      <div>
+        <div class="font-semibold mb-2 text-sm">Tarix</div>
+        <div class="space-y-1 max-h-40 overflow-y-auto">
+          ${pays.length?pays.map(p=>`<div class="flex justify-between items-center p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-sm">
+            <div><div>${p.paymentDate}</div><div class="text-xs text-slate-500">${monthLabel(p.monthKey)} uchun</div></div>
+            <div class="flex items-center gap-2"><span class="font-bold">${fmt(p.amount)} so'm</span>
+              <button onclick="deletePayment('${p.id}',true)" class="p-1 rounded text-red-500 hover:bg-red-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7"/></svg></button>
+            </div>
+          </div>`).join(''):'<div class="text-slate-400 text-sm">To\'lov yo\'q</div>'}
+        </div>
+      </div>
+    </div>`;
+  openModal();
+}
+
+// Student modal
+function openStudentModal(id){
+  const s = id?state.students.find(x=>x.id===id):{fullName:'',phone:'',joinDate:ymd(new Date()),monthlyFee:'',status:'active',groupId:state.groupId,weekdays:[],teacher:''};
+  const [fn,...ln]=(s.fullName||'').split(' ');
+  const wd0=s.weekdays||[];
+  const cur=state.groups.find(g=>g.id===s.groupId);
+  document.getElementById('modalTitle').textContent=id?"O'quvchini tahrirlash":"O'quvchini ro'yxatga olish";
+  document.getElementById('modalBody').innerHTML=`
+    <form id="studForm" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-sm font-medium block mb-1">Ism *</label><input name="firstName" required value="${escapeAttr(fn||'')}" class="input-field w-full px-4 py-2.5 rounded-xl"/></div>
+        <div><label class="text-sm font-medium block mb-1">Familya *</label><input name="lastName" required value="${escapeAttr(ln.join(' '))}" class="input-field w-full px-4 py-2.5 rounded-xl"/></div>
+      </div>
+      <div><label class="text-sm font-medium block mb-1">Telefon raqami</label><input name="phone" value="${escapeAttr(s.phone||'')}" class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="+998 90 123 45 67"/></div>
+      <div><label class="text-sm font-medium block mb-1">Guruh *</label>
+        <select name="groupId" required class="input-field w-full px-4 py-2.5 rounded-xl">
+          ${state.groups.map(g=>{const sj=state.subjects.find(x=>x.id===g.subjectId);return `<option value="${g.id}" ${g.id===s.groupId?'selected':''}>${escapeHtml((sj?sj.name+' — ':'')+g.name)}</option>`}).join('')}
+        </select></div>
+      <div><label class="text-sm font-medium block mb-1">O'qituvchi</label><input name="teacher" value="${escapeAttr(s.teacher||(cur&&cur.teacher)||'')}" class="input-field w-full px-4 py-2.5 rounded-xl"/></div>
+      <div><label class="text-sm font-medium block mb-1">Haftaning qaysi kunlari keladi? *</label>
+        <div class="flex flex-wrap gap-2">
+          ${WD.map(d=>`<label class="cursor-pointer"><input type="checkbox" name="wd" value="${d.n}" ${wd0.includes(d.n)?'checked':''} class="peer hidden"/><span class="inline-block px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold select-none peer-checked:bg-indigo-500 peer-checked:text-white peer-checked:border-indigo-500">${d.l}</span></label>`).join('')}
+        </div></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-sm font-medium block mb-1">Kelgan sana *</label><input name="joinDate" type="date" required value="${s.joinDate||ymd(new Date())}" class="input-field w-full px-4 py-2.5 rounded-xl"/></div>
+        <div><label class="text-sm font-medium block mb-1">Oylik to'lov (bo'sh = guruh narxi)</label><input name="monthlyFee" type="number" min="0" value="${s.monthlyFee||''}" placeholder="${cur?fmt(cur.monthlyFee):''}" class="input-field w-full px-4 py-2.5 rounded-xl"/></div>
+      </div>
+      <div id="calcBox"></div>
+      <div><label class="text-sm font-medium block mb-1">Status</label>
+        <select name="status" class="input-field w-full px-4 py-2.5 rounded-xl">
+          <option value="active" ${s.status==='active'?'selected':''}>Faol</option>
+          <option value="inactive" ${s.status==='inactive'?'selected':''}>Nofaol</option>
+        </select>
+      </div>
+      <button class="btn-primary w-full py-3 rounded-xl font-semibold">${id?'Saqlash':"Ro'yxatga olish"}</button>
+    </form>`;
+  openModal();
+  const f=document.getElementById('studForm'); let touched=!!s.teacher;
+  const grp=()=>state.groups.find(g=>g.id===f.groupId.value);
+  const calc=()=>{
+    const g=grp(), fee=Number(f.monthlyFee.value)||Number(g&&g.monthlyFee)||0;
+    document.getElementById('calcBox').innerHTML=calcHtml(f.joinDate.value,[...f.querySelectorAll('[name=wd]:checked')].map(x=>Number(x.value)),fee);
+  };
+  f.addEventListener('input',e=>{
+    if(e.target.name==='teacher')touched=true;
+    if(e.target.name==='groupId'){const g=grp(); if(!touched)f.teacher.value=(g&&g.teacher)||''; f.monthlyFee.placeholder=g?fmt(g.monthlyFee):'';}
+    calc();
+  });
+  f.addEventListener('submit',e=>{
+    e.preventDefault();const fd=new FormData(f);
+    const weekdays=fd.getAll('wd').map(Number);
+    if(!weekdays.length){toast("Kamida bitta dars kunini tanlang");return;}
+    const data={
+      fullName:(fd.get('firstName').trim()+' '+fd.get('lastName').trim()).trim(),
+      phone:fd.get('phone').trim(),
+      teacher:fd.get('teacher').trim(),
+      weekdays,
+      joinDate:fd.get('joinDate'),
+      monthlyFee:fd.get('monthlyFee')?Number(fd.get('monthlyFee')):0,
+      status:fd.get('status'),
+      groupId:fd.get('groupId')
+    };
+    if(id){Object.assign(state.students.find(x=>x.id===id),data);toast('Yangilandi');}
+    else{state.students.push({id:uid(),...data,createdAt:Date.now()});toast("O'quvchi qo'shildi");}
+    save();closeModal();renderPage();
+  });
+  calc();
+}
+function deleteStudent(id){
+  if(!confirm("O'quvchini va uning to'lovlarini o'chirasizmi?"))return;
+  state.students=state.students.filter(s=>s.id!==id);
+  state.payments=state.payments.filter(p=>p.studentId!==id);
+  save();renderPage();toast("O'chirildi");
+}
+
+// ============== PAYMENTS ==============
+function renderPayments(){
+  const sorted=[...state.payments].sort((a,b)=>new Date(b.paymentDate)-new Date(a.paymentDate));
+  document.getElementById('pageContent').innerHTML=`
+    <div class="glass rounded-3xl overflow-hidden">
+      <div class="overflow-x-auto"><table class="w-full text-sm">
+        <thead class="bg-gradient-to-r from-indigo-500/10 to-violet-500/10">
+          <tr class="text-left text-xs uppercase">
+            <th class="px-4 py-3">Sana</th><th class="px-4 py-3">O'quvchi</th><th class="px-4 py-3">Guruh</th>
+            <th class="px-4 py-3">Oy</th><th class="px-4 py-3">Summa</th><th class="px-4 py-3 text-right">Amal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.length?sorted.map(p=>{
+            const s=state.students.find(x=>x.id===p.studentId);
+            const g=s?state.groups.find(g=>g.id===s.groupId):null;
+            return `<tr class="table-row border-t border-slate-100 dark:border-slate-700/50">
+              <td class="px-4 py-3">${p.paymentDate}</td>
+              <td class="px-4 py-3 font-medium">${s?escapeHtml(s.fullName):"O'chirilgan"}</td>
+              <td class="px-4 py-3">${g?escapeHtml(g.name):'—'}</td>
+              <td class="px-4 py-3">${monthLabel(p.monthKey)}</td>
+              <td class="px-4 py-3 font-bold gradient-text">${fmt(p.amount)} so'm</td>
+              <td class="px-4 py-3 text-right"><button onclick="deletePayment('${p.id}')" class="p-2 rounded-xl hover:bg-red-100 text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.9 12.1A2 2 0 0116.1 21H7.9a2 2 0 01-2-1.9L5 7"/></svg></button></td>
+            </tr>`;
+          }).join(''):`<tr><td colspan="6" class="text-center py-12 text-slate-400">To'lovlar yo'q</td></tr>`}
+        </tbody>
+      </table></div>
+    </div>`;
+}
+function deletePayment(id,reopen){
+  if(!confirm("To'lovni o'chirasizmi?"))return;
+  const p=state.payments.find(x=>x.id===id);
+  state.payments=state.payments.filter(p=>p.id!==id);
+  save();
+  if(reopen && p){ closeModal(); openStudentPayments(p.studentId); }
+  else renderPage();
+  toast("O'chirildi");
+}
+
+// ============== DEBTORS ==============
+function renderDebtors(){
+  const rows=state.students.filter(s=>s.status!=='inactive')
+    .map(s=>({s, debt:studentTotalDebt(s), months:studentMonthsStatus(s).filter(m=>m.debt>0)}))
+    .filter(r=>r.debt>0)
+    .sort((a,b)=>b.debt-a.debt);
+  document.getElementById('pageContent').innerHTML=`
+    <div class="glass rounded-3xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold">Qarzdorlar ro'yxati (${rows.length})</h3>
+        <div class="font-bold text-red-500">Jami: ${fmt(rows.reduce((s,r)=>s+r.debt,0))} so'm</div>
+      </div>
+      <div class="overflow-x-auto"><table class="w-full text-sm">
+        <thead><tr class="text-left text-xs uppercase border-b border-slate-200 dark:border-slate-700">
+          <th class="py-2">F.I.O</th><th class="py-2">Telefon</th><th class="py-2">Guruh</th><th class="py-2">Qarz oylar</th><th class="py-2 text-right">Summa</th>
+        </tr></thead>
+        <tbody>
+          ${rows.length?rows.map(r=>{
+            const g=state.groups.find(g=>g.id===r.s.groupId);
+            return `<tr class="table-row border-b border-slate-100 dark:border-slate-700/50">
+              <td class="py-3 font-medium cursor-pointer" onclick="openStudentPayments('${r.s.id}')">${escapeHtml(r.s.fullName)}</td>
+              <td class="py-3">${escapeHtml(r.s.phone||'—')}</td>
+              <td class="py-3">${g?escapeHtml(g.name):'—'}</td>
+              <td class="py-3 text-xs">${r.months.map(m=>monthLabel(m.mk)).join(', ')}</td>
+              <td class="py-3 text-right font-bold text-red-500">${fmt(r.debt)} so'm</td>
+            </tr>`;
+          }).join(''):`<tr><td colspan="5" class="text-center py-12 text-slate-400">Qarzdorlar yo'q 🎉</td></tr>`}
+        </tbody>
+      </table></div>
+    </div>`;
+}
+
+// ============== STATS ==============
+function renderStats(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      ${statCard("Fanlar",state.subjects.length,'indigo','M12 6.253v13')}
+      ${statCard("Guruhlar",state.groups.length,'violet','M19 11H5')}
+      ${statCard("O'quvchilar",state.students.length,'emerald','M17 20h5v-2')}
+      ${statCard("Joriy oy",fmt(currentMonthRevenue())+" so'm",'rose','M12 8v8')}
+    </div>
+    `;
+}
+function drawMonthlyChart(canvasId, months=6){
+  const ctx=document.getElementById(canvasId);if(!ctx)return;
+  const d=today();const labels=[],data=[];
+  for(let i=months-1;i>=0;i--){
+    const dt=new Date(d.getFullYear(),d.getMonth()-i,1);
+    const mk=monthKey(dt);
+    labels.push(dt.toLocaleDateString('uz-UZ',{month:'short',year:'2-digit'}));
+    data.push(state.payments.filter(p=>p.monthKey===mk).reduce((s,p)=>s+Number(p.amount||0),0));
+  }
+  const grad=ctx.getContext('2d').createLinearGradient(0,0,0,300);
+  grad.addColorStop(0,'rgba(139,92,246,0.9)');grad.addColorStop(1,'rgba(99,102,241,0.3)');
+  new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:"Tushum",data,backgroundColor:grad,borderRadius:12,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmt(v)}}}}});
+}
+function drawSubjectsChart(canvasId){
+  const ctx=document.getElementById(canvasId);if(!ctx)return;
+  const labels=state.subjects.map(sj=>sj.name);
+  const data=state.subjects.map(sj=>{
+    const grIds=state.groups.filter(g=>g.subjectId===sj.id).map(g=>g.id);
+    return state.students.filter(s=>grIds.includes(s.groupId)).length;
+  });
+  if(!labels.length){ctx.getContext('2d').fillText("Ma'lumot yo'q",20,80);return;}
+  new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:['#6366f1','#8b5cf6','#ec4899','#f59e0b','#10b981','#06b6d4','#ef4444','#14b8a6'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},cutout:'65%'}});
+}
+function drawDailyChart(canvasId){
+  const ctx=document.getElementById(canvasId);if(!ctx)return;
+  const d=today();const labels=[],data=[];
+  for(let i=29;i>=0;i--){
+    const dt=new Date(d);dt.setDate(d.getDate()-i);
+    labels.push(dt.getDate()+'/'+(dt.getMonth()+1));
+    const sum=state.payments.filter(p=>{const x=new Date(p.paymentDate);return x.toDateString()===dt.toDateString();}).reduce((s,p)=>s+Number(p.amount),0);
+    data.push(sum);
+  }
+  new Chart(ctx,{type:'line',data:{labels,datasets:[{label:"Tushum",data,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,0.15)',fill:true,tension:0.4,pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmt(v)}}}}});
+}
+
+// ============== SETTINGS ==============
+function renderSettings(){
+  document.getElementById('pageContent').innerHTML=`
+    <div class="glass rounded-3xl p-6 space-y-4">
+      <h3 class="font-bold text-lg">Sozlamalar</h3>
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div class="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10"><div class="text-sm text-slate-500">Foydalanuvchi</div><div class="font-bold">${CRED.username}</div></div>
+        <div class="p-4 rounded-2xl bg-violet-50 dark:bg-violet-500/10"><div class="text-sm text-slate-500">Yozuvlar</div><div class="font-bold">${state.subjects.length+state.groups.length+state.students.length+state.payments.length}</div></div>
+        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10"><div class="text-sm text-slate-500">Versiya</div><div class="font-bold">2.0</div></div>
+      </div>
+      <div class="flex flex-wrap gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+        <button onclick="exportData()" class="btn-primary px-5 py-3 rounded-2xl font-semibold">Backup yuklab olish</button>
+        <label class="px-5 py-3 rounded-2xl font-semibold bg-slate-100 dark:bg-slate-700 cursor-pointer hover:bg-slate-200">
+          Backup'dan tiklash
+          <input type="file" accept=".json" onchange="importData(event)" class="hidden"/>
+        </label>
+        <button onclick="if(confirm('Barcha ma\\'lumotlar o\\'chiriladi!')){localStorage.clear();location.reload();}" class="px-5 py-3 rounded-2xl font-semibold bg-red-500 text-white hover:bg-red-600">Hammasini tozalash</button>
+      </div>
+    </div>`;
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify({subjects:state.subjects,groups:state.groups,students:state.students,payments:state.payments},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='edumanager-'+ymd(new Date())+'.json';a.click();
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);
+    state.subjects=d.subjects||[];state.groups=d.groups||[];state.students=d.students||[];state.payments=d.payments||[];
+    save();renderPage();toast('Tiklandi');}catch{toast('Xato!');}};r.readAsText(f);
+}
+
+// ============== UTILS ==============
+function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
+function escapeAttr(s){return escapeHtml(s);}
+function openModal(){const m=document.getElementById('modal');m.classList.remove('hidden');m.classList.add('flex');}
+function closeModal(){const m=document.getElementById('modal');m.classList.add('hidden');m.classList.remove('flex');}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+function toast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),2500);}
+</script>
+</body>
+</html>
